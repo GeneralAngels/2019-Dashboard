@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
+    private static final int WINDOW_HEIGHT=500;
     private static final String DRIVER_STATION = "DriverStation.exe";
     private static final String DRIVER_STATION_FULL_PATH = "C:\\Program Files (x86)\\FRC Driver Station\\" + DRIVER_STATION;
     private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
@@ -22,6 +23,7 @@ public class Main {
     private static JPanel panel, right, left;
     private static JLabel barDesc, state, robotStatus, gear;
     private static JProgressBar bar;
+    private static int currentIndex = 0;
     private static long laps = 0;
     private static File logFile;
     private static String splittingRegex = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
@@ -57,9 +59,12 @@ public class Main {
         right.add(state);
         right.add(robotStatus);
         right.add(gear);
-        Dimension size = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, 300 / 6);
+        Dimension size = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 6);
         barDesc.setMinimumSize(size);
         barDesc.setPreferredSize(size);
+        barDesc.setOpaque(false);
+        barDesc.setBackground(Color.CYAN);
+        barDesc.setText("Lolo");
         bar.setMinimumSize(size);
         bar.setPreferredSize(size);
         state.setMinimumSize(size);
@@ -71,14 +76,13 @@ public class Main {
         frame.setUndecorated(true);
         frame.setContentPane(panel);
         frame.setVisible(true);
-        frame.setSize(Toolkit.getDefaultToolkit().getScreenSize().width, 300);
+        frame.setSize(Toolkit.getDefaultToolkit().getScreenSize().width, WINDOW_HEIGHT);
         logFile = findLog();
-        updateInfo(logFile);
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if (laps % 10000 == 0) logFile = findLog();
-//                updateInfo(logFile);
+                updateInfo(logFile);
                 laps++;
             }
         }, 1000, 50);
@@ -86,22 +90,24 @@ public class Main {
 
     private static void updateInfo(File f) {
         ArrayList<String> info = parse(f);
-        for (String m : info) {
-            System.out.println(m);
+        if (currentIndex > info.size()) currentIndex = 0;
+        for (; currentIndex < info.size(); currentIndex++) {
+            String m = info.get(currentIndex);
+            if (m.contains("->") && m.contains("%")) {
+                String fullName = readUntil(m.substring(readUntil(m.substring(1), '>').length() + 1), '%');
+                String name = fullName.split(",")[0];
+                int percent = Integer.parseInt(fullName.split(",")[1].replace(" ", "").replace("%", ""));
+//            int percent = Integer.parseInt(readUntil(message.substring(name.length()), '%').replace(" ", "").replace("%", ""));
+                bar.setMaximum(100);
+                barDesc.setText("<html><p style='text-align:center'>" + name + "</p></html>");
+                bar.setValue(percent);
+            } else if (m.contains("->") && m.contains("State")) {
+                String currentState = readUntil(m.substring(readUntil(m, '>').length() + 1), ';').replace(";", "");
+                state.setText(currentState);
+            }
         }
 //        String message = info[info.length - 1];
-//        if (message.contains("->") && message.contains("%")) {
-//            String fullName = readUntil(message.substring(readUntil(message.substring(1), '>').length() + 1), '%');
-//            String name = fullName.split(",")[0];
-//            int percent = Integer.parseInt(fullName.split(",")[1].replace(" ", "").replace("%", ""));
-////            int percent = Integer.parseInt(readUntil(message.substring(name.length()), '%').replace(" ", "").replace("%", ""));
-//            bar.setMaximum(100);
-//            barDesc.setText("<html><p style='text-align:center'>" + name + "</p></html>");
-//            bar.setValue(percent);
-//        } else if (message.contains("->") && message.contains("State")) {
-//            String currentState = readUntil(message.substring(readUntil(message, '>').length() + 1), ';').replace(";", "");
-//            state.setText(currentState);
-//        }
+
     }
 
     private static String readUntil(String src, char until) {
