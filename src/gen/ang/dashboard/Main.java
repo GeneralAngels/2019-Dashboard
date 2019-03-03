@@ -15,13 +15,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
-    private static final int WINDOW_HEIGHT=500;
+    private static final int WINDOW_HEIGHT=528;
     private static final String DRIVER_STATION = "DriverStation.exe";
     private static final String DRIVER_STATION_FULL_PATH = "C:\\Program Files (x86)\\FRC Driver Station\\" + DRIVER_STATION;
     private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static JFrame frame;
     private static JPanel panel, right, left;
-    private static JLabel barDesc, state, robotStatus, gear;
+    private static TextView barDesc, state, robotStatus, gear;
+    private static JLabel rviz,camera;
     private static JProgressBar bar;
     private static int currentIndex = 0;
     private static long laps = 0;
@@ -41,38 +42,40 @@ public class Main {
         panel = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         right = new JPanel();
-//        right.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width/2,300));
         left = new JPanel();
         panel.add(right);
         panel.add(left);
-//        right.setLayout(new GridLayout(right, BoxLayout.Y_AXIS));
         bar = new JProgressBar();
-//        bar.setPreferredSize(new Dimension(right.getPreferredSize().width, 80));
-//        bar.setMinimumSize(bar.getPreferredSize());
         bar.setStringPainted(true);
-        barDesc = new JLabel();
-        state = new JLabel();
-        robotStatus = new JLabel();
-        gear = new JLabel();
+        barDesc = new TextView();
+        state = new TextView();
+        robotStatus = new TextView();
+        gear = new TextView();
+        rviz=new JLabel();
+        camera=new JLabel();
         right.add(barDesc);
         right.add(bar);
         right.add(state);
         right.add(robotStatus);
         right.add(gear);
-        Dimension size = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 6);
-        barDesc.setMinimumSize(size);
-        barDesc.setPreferredSize(size);
-        barDesc.setOpaque(false);
-        barDesc.setBackground(Color.CYAN);
-        barDesc.setText("Lolo");
-        bar.setMinimumSize(size);
-        bar.setPreferredSize(size);
-        state.setMinimumSize(size);
-        state.setPreferredSize(size);
-        robotStatus.setMinimumSize(size);
-        robotStatus.setPreferredSize(size);
-        gear.setMinimumSize(size);
-        gear.setPreferredSize(size);
+        left.add(rviz);
+        left.add(camera);
+        Dimension views = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 2);
+        Dimension texts = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 6);
+        barDesc.setMinimumSize(texts);
+        barDesc.setPreferredSize(texts);
+        bar.setMinimumSize(texts);
+        bar.setPreferredSize(texts);
+        state.setMinimumSize(texts);
+        state.setPreferredSize(texts);
+        robotStatus.setMinimumSize(texts);
+        robotStatus.setPreferredSize(texts);
+        gear.setMinimumSize(texts);
+        gear.setPreferredSize(texts);
+        rviz.setMinimumSize(views);
+        rviz.setPreferredSize(views);
+        camera.setMinimumSize(views);
+        camera.setPreferredSize(views);
         frame.setUndecorated(true);
         frame.setContentPane(panel);
         frame.setVisible(true);
@@ -81,11 +84,16 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (laps % 10000 == 0) logFile = findLog();
+                if (laps % 5000 == 0) logFile = findLog();
                 updateInfo(logFile);
+                updateStream();
                 laps++;
             }
         }, 1000, 50);
+    }
+
+    private static void updateStream(){
+
     }
 
     private static void updateInfo(File f) {
@@ -97,13 +105,21 @@ public class Main {
                 String fullName = readUntil(m.substring(readUntil(m.substring(1), '>').length() + 1), '%');
                 String name = fullName.split(",")[0];
                 int percent = Integer.parseInt(fullName.split(",")[1].replace(" ", "").replace("%", ""));
-//            int percent = Integer.parseInt(readUntil(message.substring(name.length()), '%').replace(" ", "").replace("%", ""));
                 bar.setMaximum(100);
-                barDesc.setText("<html><p style='text-align:center'>" + name + "</p></html>");
+//                barDesc.setText("<html><p style='text-align:center'>" + name + "</p></html>");
+                barDesc.setText(name);
                 bar.setValue(percent);
             } else if (m.contains("->") && m.contains("State")) {
                 String currentState = readUntil(m.substring(readUntil(m, '>').length() + 1), ';').replace(";", "");
                 state.setText(currentState);
+            } else if (m.contains(":") && m.contains("RobotStatus")) {
+                String status = m.replace("RobotStatus: ","");
+                robotStatus.setText(status);
+            } else if (m.contains(":") && m.contains("Gear")) {
+                String status = m.replace("Gear: ","");
+                if(status.equals("UP"))robotStatus.setForeground(Color.GREEN);
+                if(status.equals("DOWN"))robotStatus.setForeground(Color.RED);
+                robotStatus.setText(status);
             }
         }
 //        String message = info[info.length - 1];
