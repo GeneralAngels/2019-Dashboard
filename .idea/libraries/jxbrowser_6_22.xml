@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jxbrowser-6.22">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/jxbrowser-6.22.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,5 +1,8 @@
 package gen.ang.dashboard;
 
+import com.teamdev.jxbrowser.chromium.Browser;
+import com.teamdev.jxbrowser.chromium.swing.BrowserView;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
@@ -58,10 +61,9 @@ public class Main {
         right.add(state);
         right.add(robotStatus);
         right.add(gear);
-        left.add(rviz);
-        left.add(camera);
-        Dimension views = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 2);
+        Dimension views = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT);
         Dimension texts = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 6);
+        openStream(views);
         barDesc.setMinimumSize(texts);
         barDesc.setPreferredSize(texts);
         bar.setMinimumSize(texts);
@@ -86,14 +88,24 @@ public class Main {
             public void run() {
                 if (laps % 5000 == 0) logFile = findLog();
                 updateInfo(logFile);
-                updateStream();
                 laps++;
             }
         }, 1000, 50);
     }
 
-    private static void updateStream(){
-
+    private static void openStream(Dimension d){
+        Browser browser = new Browser();
+        BrowserView browserView = new BrowserView(browser);
+        browser.loadURL("http://bob-de-mini.local:5800/stream_viewer?topic=/camera/rgb");
+        browserView.setMinimumSize(d);
+        browserView.setPreferredSize(d);
+        browser.setSize(d.width,d.height);
+        left.add(browserView);
+//        try {
+//            Runtime.getRuntime().exec("\"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe\" --window-size="+x+","+y+" --window-position="+x+","+0+" --new-window http://bob-de-mini.local:5800/stream_viewer?topic=/camera/rgb");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private static void updateInfo(File f) {
