@@ -1,6 +1,9 @@
 package gen.ang.dashboard;
 
 import com.teamdev.jxbrowser.chromium.Browser;
+import com.teamdev.jxbrowser.chromium.BrowserContext;
+import com.teamdev.jxbrowser.chromium.BrowserContextParams;
+import com.teamdev.jxbrowser.chromium.BrowserType;
 import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 
 import javax.swing.*;
@@ -10,10 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.*;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -94,9 +95,12 @@ public class Main {
     }
 
     private static void openStream(Dimension d){
-        Browser browser = new Browser();
+        String identity = UUID.randomUUID().toString();
+        BrowserContextParams params = new BrowserContextParams("temp/browser/" + identity);
+        BrowserContext context1 = new BrowserContext(params);
+        Browser browser = new Browser(context1);
         BrowserView browserView = new BrowserView(browser);
-        browser.loadURL("http://bob-de-mini.local:5800/stream_viewer?topic=/camera/rgb");
+        browser.loadURL("http://10.22.30.17:5800/stream_viewer?topic=/camera/rgb");
         browserView.setMinimumSize(d);
         browserView.setPreferredSize(d);
         browser.setSize(d.width,d.height);

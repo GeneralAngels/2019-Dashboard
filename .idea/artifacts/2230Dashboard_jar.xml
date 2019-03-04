@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="2230Dashboard:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/2230Dashboard_jar</output-path>
+    <root id="archive" name="2230Dashboard.jar">
+      <element id="module-output" name="2230Dashboard" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/jxbrowser-win64-6.22.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/license.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/jxbrowser-6.22.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
