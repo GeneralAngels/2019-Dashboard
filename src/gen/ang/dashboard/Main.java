@@ -100,7 +100,8 @@ public class Main {
         BrowserContext context1 = new BrowserContext(params);
         Browser browser = new Browser(context1);
         BrowserView browserView = new BrowserView(browser);
-        browser.loadURL("http://10.22.30.17:5800/stream_viewer?topic=/camera/rgb");
+        browser.loadURL("http://10.22.30.17:5800/stream?topic=/camera/rgb");
+        browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
         browserView.setMinimumSize(d);
         browserView.setPreferredSize(d);
         browser.setSize(d.width,d.height);
