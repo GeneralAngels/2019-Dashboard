@@ -28,6 +28,7 @@ public class Main {
     private static TextView barDesc, state, robotStatus, gear;
     private static JLabel rviz,camera;
     private static JProgressBar bar;
+    private static Browser browser;
     private static int currentIndex = 0;
     private static long laps = 0;
     private static File logFile;
@@ -87,6 +88,7 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
                 if (laps % 5000 == 0) logFile = findLog();
                 updateInfo(logFile);
                 laps++;
@@ -98,10 +100,9 @@ public class Main {
         String identity = UUID.randomUUID().toString();
         BrowserContextParams params = new BrowserContextParams("temp/browser/" + identity);
         BrowserContext context1 = new BrowserContext(params);
-        Browser browser = new Browser(context1);
+        browser = new Browser(context1);
         BrowserView browserView = new BrowserView(browser);
         browser.loadURL("http://10.22.30.17:5800/stream?topic=/camera/rgb");
-        browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
         browserView.setMinimumSize(d);
         browserView.setPreferredSize(d);
         browser.setSize(d.width,d.height);
