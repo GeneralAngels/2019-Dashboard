@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
     private static final int STREAM_HEIGHT = 465;
+    private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static JFrame frame;
     private static JPanel panel, right, left;
     private static boolean record = true;
@@ -46,9 +47,7 @@ public class Main {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
             e.printStackTrace();
         }
-//        if (!isRunning(DRIVER_STATION)) {
-//            startDS();
-//        }
+
         frame = new JFrame("2230 Dash");
         panel = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
@@ -241,8 +240,11 @@ public class Main {
     }
 
     private static void startDS() {
+        String DRIVER_STATION = "DriverStation.exe";
+        String DRIVER_STATION_FULL_PATH = "C:\\Program Files (x86)\\FRC Driver Station\\" + DRIVER_STATION;
         try {
-            Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + DRIVER_STATION_FULL_PATH);
+            if (!isRunning(DRIVER_STATION))
+                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + DRIVER_STATION_FULL_PATH);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -276,10 +278,10 @@ public class Main {
         private int streamIndex = 0;
 
         public StreamView(String name) {
-            BrowserContextParams params=new BrowserContextParams("temp/browser/" + name);
+            BrowserContextParams params = new BrowserContextParams("temp/browser/" + name);
             params.setStorageType(StorageType.DISK);
-            BrowserContext context=new BrowserContext(params);
-            browser = new Browser(BrowserType.LIGHTWEIGHT,context);
+            BrowserContext context = new BrowserContext(params);
+            browser = new Browser(BrowserType.LIGHTWEIGHT, context);
             browserView = new BrowserView(browser);
             buttons = new JPanel();
             refresh = new JButton("⟳");
