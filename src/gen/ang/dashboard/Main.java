@@ -1,8 +1,6 @@
 package gen.ang.dashboard;
 
-import com.teamdev.jxbrowser.chromium.Browser;
-import com.teamdev.jxbrowser.chromium.BrowserContext;
-import com.teamdev.jxbrowser.chromium.BrowserContextParams;
+import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,16 +23,11 @@ import java.util.regex.Pattern;
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
     private static final int STREAM_HEIGHT = 465;
-    private static final String DRIVER_STATION = "DriverStation.exe";
-    private static final String DRIVER_STATION_FULL_PATH = "C:\\Program Files (x86)\\FRC Driver Station\\" + DRIVER_STATION;
-    private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static JFrame frame;
     private static JPanel panel, right, left;
-    private static Browser browser;
     private static boolean record = true;
-    private static int currentIndex = 0, streamIndex = 0;
+    private static int currentIndex = 0;
     private static long laps = 0;
-    private static ArrayList<String> streams = findStreams();
     private static File logFile;
     private static CSV csv = new CSV();
     private static String splittingRegex = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
@@ -44,7 +37,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        JButton nextStream, prevStream, saveCSV, updateStreams, addMarker, recordingHalt;
+        JButton saveCSV, addMarker, recordingHalt;
+        StreamView main, leftCam, rightCam;
         TextView info;
         Dimension lillilbuttons = new Dimension((width() - 30) / 6, WINDOW_HEIGHT - STREAM_HEIGHT - 20);
         try {
@@ -52,28 +46,25 @@ public class Main {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
             e.printStackTrace();
         }
-        if (!isRunning(DRIVER_STATION)) {
-            startDS();
-        }
+//        if (!isRunning(DRIVER_STATION)) {
+//            startDS();
+//        }
         frame = new JFrame("2230 Dash");
         panel = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         right = new JPanel();
         left = new JPanel();
+        main = new StreamView("main");
+        leftCam = new StreamView("left");
+        rightCam = new StreamView("right");
         info = new TextView();
         JPanel csvShit = new JPanel();
-        JPanel streamSwitcher = new JPanel();
-        nextStream = new JButton("Next Stream");
-        prevStream = new JButton("Prev Stream");
-        updateStreams = new JButton("Refresh Streams");
         recordingHalt = new JButton("Pause Recording");
         addMarker = new JButton("Add Marker");
         saveCSV = new JButton("Save CSV");
-        panel.add(left);
+        panel.add(main);
+        main.setSize(width() / 2, WINDOW_HEIGHT);
         panel.add(right);
-        streamSwitcher.add(nextStream);
-        streamSwitcher.add(prevStream);
-        streamSwitcher.add(updateStreams);
         csvShit.add(saveCSV);
         csvShit.add(addMarker);
         csvShit.add(recordingHalt);
@@ -85,37 +76,6 @@ public class Main {
         addMarker.setPreferredSize(lillilbuttons);
         recordingHalt.setMinimumSize(lillilbuttons);
         recordingHalt.setPreferredSize(lillilbuttons);
-        updateStreams.setMinimumSize(lillilbuttons);
-        updateStreams.setPreferredSize(lillilbuttons);
-        prevStream.setMinimumSize(lillilbuttons);
-        prevStream.setPreferredSize(lillilbuttons);
-        nextStream.setMinimumSize(lillilbuttons);
-        nextStream.setPreferredSize(lillilbuttons);
-        openStream();
-        left.add(streamSwitcher);
-        if (streamIndex < streams.size()) setStream(streams.get(streamIndex));
-        nextStream.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (streamIndex < streams.size() - 1) {
-                    streamIndex++;
-                } else {
-                    streamIndex = 0;
-                }
-                setStream(streams.get(streamIndex));
-            }
-        });
-        prevStream.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (streamIndex > 0) {
-                    streamIndex--;
-                } else {
-                    streamIndex = streams.size() - 1;
-                }
-                setStream(streams.get(streamIndex));
-            }
-        });
         saveCSV.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -125,12 +85,6 @@ public class Main {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(null, "Not Saved!");
                 }
-            }
-        });
-        updateStreams.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                streams = findStreams();
             }
         });
         recordingHalt.addActionListener(new AbstractAction() {
@@ -159,43 +113,14 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
+                main.resize();
+                leftCam.resize();
+                rightCam.resize();
                 if (laps % 5000 == 0) logFile = findLog();
                 updateInfo(logFile, info);
                 laps++;
             }
         }, 1000, 50);
-    }
-
-    private static void setStream(String name) {
-        browser.loadURL("http://10.22.30.17:5800" + name);
-    }
-
-    private static ArrayList<String> findStreams() {
-        ArrayList<String> streams = new ArrayList<>();
-        try {
-            Document document = Jsoup.connect("http://10.22.30.17:5800").get();
-            Elements links = document.select("a");
-            for (Element e : links) {
-                if (!e.text().equals("Snapshot"))
-                    streams.add(e.attr("href").replace("_viewer", ""));
-            }
-        } catch (Exception ignored) {
-        }
-        return streams;
-    }
-
-    private static void openStream() {
-        Dimension d = new Dimension(width() / 2, STREAM_HEIGHT);
-        String identity = UUID.randomUUID().toString();
-        BrowserContextParams params = new BrowserContextParams("temp/browser/" + identity);
-        BrowserContext context1 = new BrowserContext(params);
-        browser = new Browser(context1);
-        BrowserView browserView = new BrowserView(browser);
-        browserView.setMinimumSize(d);
-        browserView.setPreferredSize(d);
-        browser.setSize(d.width, d.height);
-        left.add(browserView);
     }
 
     private static void updateInfo(File f, TextView infoView) {
@@ -336,6 +261,112 @@ public class Main {
             return pidInfo.toString().contains(processName);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    static class StreamView extends JPanel {
+
+        private static final int FONT_SIZE = 28;
+
+        private Browser browser;
+        private BrowserView browserView;
+        private ArrayList<String> streams;
+        private JPanel buttons;
+        private JButton refresh, next, previous;
+        private int streamIndex = 0;
+
+        public StreamView(String name) {
+            BrowserContextParams params=new BrowserContextParams("temp/browser/" + name);
+            params.setStorageType(StorageType.DISK);
+            BrowserContext context=new BrowserContext(params);
+            browser = new Browser(BrowserType.LIGHTWEIGHT,context);
+            browserView = new BrowserView(browser);
+            buttons = new JPanel();
+            refresh = new JButton("⟳");
+            next = new JButton("▶");
+            previous = new JButton("◀");
+            refresh.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, FONT_SIZE));
+            next.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, FONT_SIZE));
+            previous.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, FONT_SIZE));
+            refresh.addActionListener(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    updateStreams();
+                }
+            });
+            next.addActionListener(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    next();
+                }
+            });
+            previous.addActionListener(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    previous();
+                }
+            });
+            buttons.add(previous);
+            buttons.add(refresh);
+            buttons.add(next);
+            add(browserView);
+            add(buttons);
+            updateStreams();
+            updateStream();
+        }
+
+        public void updateStreams() {
+            streams = new ArrayList<>();
+            try {
+                Document document = Jsoup.connect("http://10.22.30.17:5800").get();
+                Elements links = document.select("a");
+                for (Element e : links) {
+                    if (!e.text().equals("Snapshot"))
+                        streams.add(e.attr("href").replace("_viewer", ""));
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        public void resize() {
+            browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
+        }
+
+        public void updateStream() {
+            if (streamIndex < streams.size())
+                browser.loadURL("http://10.22.30.17:5800" + streams.get(streamIndex));
+        }
+
+        public void next() {
+            if (streamIndex < streams.size() - 1) {
+                streamIndex++;
+            } else {
+                streamIndex = 0;
+            }
+            updateStream();
+        }
+
+        public void previous() {
+            if (streamIndex > 0) {
+                streamIndex--;
+            } else {
+                streamIndex = streams.size() - 1;
+            }
+            updateStream();
+        }
+
+        @Override
+        public void setSize(Dimension dimension) {
+            Dimension streamView = new Dimension(dimension.width, dimension.height - 70);
+            browserView.setMinimumSize(streamView);
+            browserView.setPreferredSize(streamView);
+            super.setPreferredSize(dimension);
+            super.setMinimumSize(dimension);
+        }
+
+        @Override
+        public void setSize(int width, int height) {
+            setSize(new Dimension(width, height));
         }
     }
 
