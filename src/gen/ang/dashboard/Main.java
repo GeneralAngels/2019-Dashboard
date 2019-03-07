@@ -15,8 +15,8 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Timer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +25,7 @@ public class Main {
     private static final int STREAM_HEIGHT = 465;
     private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static JFrame frame;
-    private static JPanel panel, right, left;
+    private static JPanel panel, right;
     private static boolean record = true;
     private static int currentIndex = 0;
     private static long laps = 0;
@@ -40,8 +40,9 @@ public class Main {
     public static void main(String[] args) {
         JButton saveCSV, addMarker, recordingHalt;
         StreamView main, leftCam, rightCam;
-        TextView info;
-        Dimension lillilbuttons = new Dimension((width() - 30) / 6, WINDOW_HEIGHT - STREAM_HEIGHT - 20);
+        JTextArea info;
+        JPanel smallStreamHolder;
+        Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, WINDOW_HEIGHT - STREAM_HEIGHT - 20);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
@@ -52,29 +53,44 @@ public class Main {
         panel = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         right = new JPanel();
-        left = new JPanel();
+        smallStreamHolder = new JPanel();
+        smallStreamHolder.setLayout(new GridLayout(1, 2));
         main = new StreamView("main");
         leftCam = new StreamView("left");
         rightCam = new StreamView("right");
-        info = new TextView();
+        info = new JTextArea();
         JPanel csvShit = new JPanel();
         recordingHalt = new JButton("Pause Recording");
         addMarker = new JButton("Add Marker");
         saveCSV = new JButton("Save CSV");
-        panel.add(main);
+        JScrollPane infoScroll=new JScrollPane(info);
+        Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 -80);
+        info.setEditable(false);
+        infoScroll.setPreferredSize(infoSize);
+        infoScroll.setMinimumSize(infoSize);
+        infoScroll.setMaximumSize(infoSize);
+        info.setBackground(Color.BLACK);
+        info.setForeground(Color.GREEN);
+//        info.setText("Text1\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\n");
+        leftCam.setSize((width() / 4) - 10, WINDOW_HEIGHT / 2);
+        rightCam.setSize((width() / 4) - 10, WINDOW_HEIGHT / 2);
         main.setSize(width() / 2, WINDOW_HEIGHT);
+        smallStreamHolder.add(leftCam);
+        smallStreamHolder.add(rightCam);
+        panel.add(main);
         panel.add(right);
+        right.add(smallStreamHolder);
+        right.add(csvShit);
+        right.add(infoScroll);
         csvShit.add(saveCSV);
         csvShit.add(addMarker);
         csvShit.add(recordingHalt);
-        right.add(csvShit);
-        right.add(info);
-        saveCSV.setMinimumSize(lillilbuttons);
-        saveCSV.setPreferredSize(lillilbuttons);
-        addMarker.setMinimumSize(lillilbuttons);
-        addMarker.setPreferredSize(lillilbuttons);
-        recordingHalt.setMinimumSize(lillilbuttons);
-        recordingHalt.setPreferredSize(lillilbuttons);
+        saveCSV.setMinimumSize(smallButtonDimensions);
+        saveCSV.setPreferredSize(smallButtonDimensions);
+        addMarker.setMinimumSize(smallButtonDimensions);
+        addMarker.setPreferredSize(smallButtonDimensions);
+        recordingHalt.setMinimumSize(smallButtonDimensions);
+        recordingHalt.setPreferredSize(smallButtonDimensions);
         saveCSV.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -122,7 +138,7 @@ public class Main {
         }, 1000, 50);
     }
 
-    private static void updateInfo(File f, TextView infoView) {
+    private static void updateInfo(File f, JTextArea infoView) {
         ArrayList<String> info = parse(f);
         if (currentIndex > info.size()) currentIndex = 0;
         for (; currentIndex < info.size(); currentIndex++) {
@@ -278,6 +294,7 @@ public class Main {
         private int streamIndex = 0;
 
         public StreamView(String name) {
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             BrowserContextParams params = new BrowserContextParams("temp/browser/" + name);
             params.setStorageType(StorageType.DISK);
             BrowserContext context = new BrowserContext(params);
@@ -340,30 +357,36 @@ public class Main {
         }
 
         public void next() {
-            if (streamIndex < streams.size() - 1) {
-                streamIndex++;
-            } else {
-                streamIndex = 0;
+            if (streams.size() > 0) {
+                if (streamIndex < streams.size() - 1) {
+                    streamIndex++;
+                } else {
+                    streamIndex = 0;
+                }
+                updateStream();
             }
-            updateStream();
         }
 
         public void previous() {
-            if (streamIndex > 0) {
-                streamIndex--;
-            } else {
-                streamIndex = streams.size() - 1;
+            if (streams.size() > 0) {
+                if (streamIndex > 0) {
+                    streamIndex--;
+                } else {
+                    streamIndex = streams.size() - 1;
+                }
+                updateStream();
             }
-            updateStream();
         }
 
         @Override
         public void setSize(Dimension dimension) {
-            Dimension streamView = new Dimension(dimension.width, dimension.height - 70);
+            Dimension streamView = new Dimension(dimension.width, dimension.height - 55);
             browserView.setMinimumSize(streamView);
+            browserView.setMaximumSize(streamView);
             browserView.setPreferredSize(streamView);
             super.setPreferredSize(dimension);
             super.setMinimumSize(dimension);
+            super.setMaximumSize(dimension);
         }
 
         @Override
