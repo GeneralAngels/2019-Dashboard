@@ -24,20 +24,30 @@ import java.util.regex.Pattern;
 
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
+    private static final int STREAM_HEIGHT = 465;
     private static final String DRIVER_STATION = "DriverStation.exe";
     private static final String DRIVER_STATION_FULL_PATH = "C:\\Program Files (x86)\\FRC Driver Station\\" + DRIVER_STATION;
     private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static JFrame frame;
     private static JPanel panel, right, left;
-    private static JButton nextStream,prevStream,saveCSV;
     private static Browser browser;
-    private static int currentIndex = 0,streamIndex=0;
+    private static boolean record = true;
+    private static int currentIndex = 0, streamIndex = 0;
     private static long laps = 0;
+    private static ArrayList<String> streams = findStreams();
     private static File logFile;
-    private static CSV csv=new CSV();
+    private static CSV csv = new CSV();
     private static String splittingRegex = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
 
+    private static int width() {
+        return Toolkit.getDefaultToolkit().getScreenSize().width;
+    }
+
     public static void main(String[] args) {
+        JButton nextStream, prevStream, saveCSV, updateStreams, addMarker, recordingHalt;
+        TextView info;
+        Dimension lilbuttons = new Dimension(width() / 2, WINDOW_HEIGHT / 10);
+        Dimension lillilbuttons = new Dimension((width() - 30) / 6, WINDOW_HEIGHT - STREAM_HEIGHT - 20);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
@@ -46,31 +56,52 @@ public class Main {
         if (!isRunning(DRIVER_STATION)) {
             startDS();
         }
-        ArrayList<String> streams=findStreams();
         frame = new JFrame("2230 Dash");
         panel = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         right = new JPanel();
         left = new JPanel();
-        nextStream=new JButton("Next Stream");
-        prevStream=new JButton("Prev Stream");
-        saveCSV=new JButton("Save CSV");
-        panel.add(right);
+        info = new TextView();
+        JPanel csvShit = new JPanel();
+        JPanel streamSwitcher = new JPanel();
+        nextStream = new JButton("Next Stream");
+        prevStream = new JButton("Prev Stream");
+        updateStreams = new JButton("Refresh Streams");
+        recordingHalt = new JButton("Pause Recording");
+        addMarker = new JButton("Add Marker");
+        saveCSV = new JButton("Save CSV");
         panel.add(left);
-        right.add(nextStream);
-        right.add(prevStream);
-        right.add(saveCSV);
-        Dimension views = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT);
-        Dimension texts = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2, WINDOW_HEIGHT / 6);
-        openStream(views);
-        setStream(streams.get(streamIndex));
+        panel.add(right);
+        streamSwitcher.add(nextStream);
+        streamSwitcher.add(prevStream);
+        streamSwitcher.add(updateStreams);
+        csvShit.add(saveCSV);
+        csvShit.add(addMarker);
+        csvShit.add(recordingHalt);
+        right.add(csvShit);
+        right.add(info);
+        saveCSV.setMinimumSize(lillilbuttons);
+        saveCSV.setPreferredSize(lillilbuttons);
+        addMarker.setMinimumSize(lillilbuttons);
+        addMarker.setPreferredSize(lillilbuttons);
+        recordingHalt.setMinimumSize(lillilbuttons);
+        recordingHalt.setPreferredSize(lillilbuttons);
+        updateStreams.setMinimumSize(lillilbuttons);
+        updateStreams.setPreferredSize(lillilbuttons);
+        prevStream.setMinimumSize(lillilbuttons);
+        prevStream.setPreferredSize(lillilbuttons);
+        nextStream.setMinimumSize(lillilbuttons);
+        nextStream.setPreferredSize(lillilbuttons);
+        openStream();
+        left.add(streamSwitcher);
+        if (streamIndex < streams.size()) setStream(streams.get(streamIndex));
         nextStream.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(streamIndex<streams.size()-1){
+                if (streamIndex < streams.size() - 1) {
                     streamIndex++;
-                }else{
-                    streamIndex=0;
+                } else {
+                    streamIndex = 0;
                 }
                 setStream(streams.get(streamIndex));
             }
@@ -78,10 +109,10 @@ public class Main {
         prevStream.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(streamIndex>0){
+                if (streamIndex > 0) {
                     streamIndex--;
-                }else{
-                    streamIndex=streams.size()-1;
+                } else {
+                    streamIndex = streams.size() - 1;
                 }
                 setStream(streams.get(streamIndex));
             }
@@ -93,28 +124,52 @@ public class Main {
                     csv.save();
                 } catch (IOException e1) {
                     e1.printStackTrace();
-                    JOptionPane.showConfirmDialog(null,"NOT SAVED!");
+                    JOptionPane.showMessageDialog(null, "Not Saved!");
                 }
+            }
+        });
+        updateStreams.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                streams = findStreams();
+            }
+        });
+        recordingHalt.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                record = !record;
+                if (record) {
+                    recordingHalt.setText("Pause Recording");
+                } else {
+                    recordingHalt.setText("Resume Recording");
+                }
+            }
+        });
+        addMarker.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String line = JOptionPane.showInputDialog("Marker");
+                csv.addLine(new ArrayList<>(Collections.singletonList(line)));
             }
         });
         frame.setUndecorated(true);
         frame.setContentPane(panel);
         frame.setVisible(true);
-        frame.setSize(Toolkit.getDefaultToolkit().getScreenSize().width, WINDOW_HEIGHT);
+        frame.setSize(width(), WINDOW_HEIGHT);
         logFile = findLog();
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
                 if (laps % 5000 == 0) logFile = findLog();
-                updateInfo(logFile);
+                updateInfo(logFile, info);
                 laps++;
             }
         }, 1000, 50);
     }
 
-    private static void setStream(String name){
-        browser.loadURL("http://10.22.30.17:5800"+name);
+    private static void setStream(String name) {
+        browser.loadURL("http://10.22.30.17:5800" + name);
     }
 
     private static ArrayList<String> findStreams() {
@@ -131,7 +186,8 @@ public class Main {
         return streams;
     }
 
-    private static void openStream(Dimension d) {
+    private static void openStream() {
+        Dimension d = new Dimension(width() / 2, STREAM_HEIGHT);
         String identity = UUID.randomUUID().toString();
         BrowserContextParams params = new BrowserContextParams("temp/browser/" + identity);
         BrowserContext context1 = new BrowserContext(params);
@@ -143,16 +199,23 @@ public class Main {
         left.add(browserView);
     }
 
-    private static void updateInfo(File f) {
+    private static void updateInfo(File f, TextView infoView) {
         ArrayList<String> info = parse(f);
         if (currentIndex > info.size()) currentIndex = 0;
         for (; currentIndex < info.size(); currentIndex++) {
             String m = info.get(currentIndex);
             if (m.startsWith("{") && m.endsWith("}")) {
                 try {
-                    ArrayList<Value> inilified=inlinify(new JSONObject(m));
-                    csv.addLine(lineify(inilified));
-                    csv.setTitles(titleify(inilified));
+                    ArrayList<Value> inilified = inlinify(new JSONObject(m));
+                    if (record) {
+                        csv.addLine(lineify(inilified));
+                        csv.setTitles(titleify(inilified));
+                    }
+                    StringBuilder infoBuilder = new StringBuilder();
+                    for (Value v : inilified) {
+                        infoBuilder.append(v.getKey()).append(": ").append(v.value).append("\n");
+                    }
+                    infoView.setText(infoBuilder.toString());
                 } catch (Exception e) {
 
                 }
@@ -161,42 +224,43 @@ public class Main {
 //        String message = info[info.length - 1];
 
     }
-    private static ArrayList<String> titleify(ArrayList<Value> values){
-        ArrayList<String> t=new ArrayList<>();
-        for (Value v:values){
+
+    private static ArrayList<String> titleify(ArrayList<Value> values) {
+        ArrayList<String> t = new ArrayList<>();
+        for (Value v : values) {
             t.add(v.getKey());
         }
         return t;
     }
 
-    private static ArrayList<String> lineify(ArrayList<Value> values){
-        ArrayList<String> t=new ArrayList<>();
-        for (Value v:values){
+    private static ArrayList<String> lineify(ArrayList<Value> values) {
+        ArrayList<String> t = new ArrayList<>();
+        for (Value v : values) {
             t.add(v.getValue());
         }
         return t;
     }
 
-    private static ArrayList<Value> inlinify(JSONObject jsonObject){
-        ArrayList<Value> inlined=new ArrayList<>();
-        Iterator<String> keys=jsonObject.keys();
-        while(keys.hasNext()){
-            String key=keys.next();
-            Object got=jsonObject.get(key);
-            if(got instanceof JSONObject){
-                inlined.addAll(inlinify((JSONObject)got));
-            }else if(got instanceof JSONArray){
-                JSONArray arr=(JSONArray)got;
-                Value v=new Value();
+    private static ArrayList<Value> inlinify(JSONObject jsonObject) {
+        ArrayList<Value> inlined = new ArrayList<>();
+        Iterator<String> keys = jsonObject.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object got = jsonObject.get(key);
+            if (got instanceof JSONObject) {
+                inlined.addAll(inlinify((JSONObject) got));
+            } else if (got instanceof JSONArray) {
+                JSONArray arr = (JSONArray) got;
+                Value v = new Value();
                 v.setKey(key);
-                String val="";
-                for(int i=0;i<arr.length();i++){
-                    val+=arr.get(i).toString();
+                String val = "";
+                for (int i = 0; i < arr.length(); i++) {
+                    val += arr.get(i).toString();
                 }
                 v.setValue(val);
                 inlined.add(v);
-            }else {
-                Value v=new Value();
+            } else {
+                Value v = new Value();
                 v.setKey(key);
                 v.setValue(got.toString());
                 inlined.add(v);
@@ -276,7 +340,7 @@ public class Main {
         }
     }
 
-    static class Value{
+    static class Value {
         String value;
         String key;
 
@@ -284,12 +348,12 @@ public class Main {
             return key;
         }
 
-        public String getValue() {
-            return value;
-        }
-
         public void setKey(String key) {
             this.key = key;
+        }
+
+        public String getValue() {
+            return value;
         }
 
         public void setValue(String value) {
@@ -297,34 +361,34 @@ public class Main {
         }
     }
 
-    static class CSV{
-        ArrayList<String> titles=new ArrayList<>();
-        ArrayList<ArrayList<String>> lines=new ArrayList<>();
+    static class CSV {
+        ArrayList<String> titles = new ArrayList<>();
+        ArrayList<ArrayList<String>> lines = new ArrayList<>();
 
         public void setTitles(ArrayList<String> titles) {
             this.titles = titles;
         }
 
-        public void addLine(ArrayList<String> values){
+        public void addLine(ArrayList<String> values) {
             lines.add(values);
         }
 
         public void save() throws IOException {
-            String date=new SimpleDateFormat("dd-MM-yy-HH:mm:ss").format(new Date());
-            File f=new File(System.getProperty("user.home")+"/DashCSVs/Data("+date+").csv");
+            String date = new SimpleDateFormat("dd_MM-HH_mm_ss").format(new Date());
+            File f = new File(System.getProperty("user.home") + "/DashCSVs/Data(" + date + ").csv");
             System.out.println(f.toString());
             f.createNewFile();
-            OutputStreamWriter osw=new OutputStreamWriter(new FileOutputStream(f));
-            StringBuilder titleString= new StringBuilder();
-            for(String title:titles){
-                if(titleString.length()>0) titleString.append(",");
+            OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(f));
+            StringBuilder titleString = new StringBuilder();
+            for (String title : titles) {
+                if (titleString.length() > 0) titleString.append(",");
                 titleString.append(title);
             }
             osw.append(titleString.toString()).append("\n");
-            for(ArrayList<String> vals:lines){
-                StringBuilder valString= new StringBuilder();
-                for(String val:vals){
-                    if(valString.length()>0) valString.append(",");
+            for (ArrayList<String> vals : lines) {
+                StringBuilder valString = new StringBuilder();
+                for (String val : vals) {
+                    if (valString.length() > 0) valString.append(",");
                     valString.append(val);
                 }
                 osw.append(valString.toString()).append("\n");
