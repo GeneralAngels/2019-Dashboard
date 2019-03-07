@@ -46,7 +46,6 @@ public class Main {
     public static void main(String[] args) {
         JButton nextStream, prevStream, saveCSV, updateStreams, addMarker, recordingHalt;
         TextView info;
-        Dimension lilbuttons = new Dimension(width() / 2, WINDOW_HEIGHT / 10);
         Dimension lillilbuttons = new Dimension((width() - 30) / 6, WINDOW_HEIGHT - STREAM_HEIGHT - 20);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
