@@ -60,9 +60,9 @@ public class Main {
         rightCam = new StreamView("right");
         info = new JTextArea();
         JPanel csvShit = new JPanel();
-        recordingHalt = new JButton("Pause Recording");
-        addMarker = new JButton("Add Marker");
-        saveCSV = new JButton("Save CSV");
+        recordingHalt = new JButton("Pause");
+        addMarker = new JButton("Marker");
+        saveCSV = new JButton("Save");
         JScrollPane infoScroll=new JScrollPane(info);
         Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 -80);
         info.setEditable(false);
@@ -107,9 +107,9 @@ public class Main {
             public void actionPerformed(ActionEvent e) {
                 record = !record;
                 if (record) {
-                    recordingHalt.setText("Pause Recording");
+                    recordingHalt.setText("Pause");
                 } else {
-                    recordingHalt.setText("Resume Recording");
+                    recordingHalt.setText("Resume");
                 }
             }
         });
@@ -131,11 +131,11 @@ public class Main {
                 main.resize();
                 leftCam.resize();
                 rightCam.resize();
-                if (laps % 5000 == 0) logFile = findLog();
+                if (laps % 1000 == 0) logFile = findLog();
                 updateInfo(logFile, info);
                 laps++;
             }
-        }, 1000, 50);
+        }, 1000, 100);
     }
 
     private static void updateInfo(File f, JTextArea infoView) {
@@ -143,7 +143,7 @@ public class Main {
         if (currentIndex > info.size()) currentIndex = 0;
         for (; currentIndex < info.size(); currentIndex++) {
             String m = info.get(currentIndex);
-            if (m.startsWith("{") && m.endsWith("}")) {
+            if (m.startsWith("{")) {
                 try {
                     ArrayList<Value> inilified = inlinify(new JSONObject(m));
                     if (record) {
@@ -156,7 +156,7 @@ public class Main {
                     }
                     infoView.setText(infoBuilder.toString());
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 }
             }
         }
