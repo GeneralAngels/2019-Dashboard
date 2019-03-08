@@ -15,22 +15,24 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Timer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
-    private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
+    private static final File LOG_FILES_DIRECTORY = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
+    private static final String SPLITTING_REGEX = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
     private static JFrame frame;
     private static JPanel panel, right;
+    private static TextView gearState, stateState;
+    private static JSONObject currentObject;
+    private static File logFile;
+    private static CSV csv = new CSV();
     private static boolean record = true;
     private static int currentIndex = 0;
     private static long laps = 0;
-    private static File logFile;
-    private static CSV csv = new CSV();
-    private static String splittingRegex = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
 
     private static int width() {
         return Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -40,56 +42,72 @@ public class Main {
         JButton saveCSV, addMarker, recordingHalt;
         StreamView main, leftCam, rightCam;
         JTextArea info;
-        JPanel smallStreamHolder;
-        Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, 50);
+        JScrollPane infoScroll;
+        JPanel smallStreamHolder, csvShit, robotInfo;
+        Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, 30);
+        Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 45);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
             e.printStackTrace();
         }
-
         frame = new JFrame("2230 Dash");
         panel = new JPanel();
-        panel.setLayout(new GridLayout(1, 2));
         right = new JPanel();
-        smallStreamHolder = new JPanel();
-        smallStreamHolder.setLayout(new GridLayout(1, 2));
-        main = new StreamView("main");
-        leftCam = new StreamView("left");
-        rightCam = new StreamView("right");
+        robotInfo = new JPanel();
+        csvShit = new JPanel();
+        gearState = new TextView();
+        stateState = new TextView();
         info = new JTextArea();
-        JPanel csvShit = new JPanel();
         recordingHalt = new JButton("Pause");
         addMarker = new JButton("Marker");
         saveCSV = new JButton("Save");
-        JScrollPane infoScroll = new JScrollPane(info);
-        Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 80);
+        infoScroll = new JScrollPane(info);
+        main = new StreamView("main");
+        leftCam = new StreamView("left");
+        rightCam = new StreamView("right");
+        smallStreamHolder = new JPanel();
+        panel.setLayout(new GridLayout(1, 2));
+        smallStreamHolder.setLayout(new GridLayout(1, 2));
+        robotInfo.setLayout(new GridLayout(1, 2));
         info.setEditable(false);
+        info.setBackground(Color.BLACK);
+        info.setForeground(Color.GREEN);
+        gearState.setText("⛭ Unknown");
+        stateState.setText("➲ Unknown");
+        leftCam.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
+        rightCam.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
+        main.setSize(width() / 2, WINDOW_HEIGHT);
         infoScroll.setPreferredSize(infoSize);
         infoScroll.setMinimumSize(infoSize);
         infoScroll.setMaximumSize(infoSize);
-        info.setBackground(Color.BLACK);
-        info.setForeground(Color.GREEN);
-//        info.setText("Text1\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\nText\n");
-        leftCam.setSize((width() / 4) - 10, WINDOW_HEIGHT / 2);
-        rightCam.setSize((width() / 4) - 10, WINDOW_HEIGHT / 2);
-        main.setSize(width() / 2, WINDOW_HEIGHT);
-        smallStreamHolder.add(leftCam);
-        smallStreamHolder.add(rightCam);
-        panel.add(main);
-        panel.add(right);
-        right.add(smallStreamHolder);
-        right.add(csvShit);
-        right.add(infoScroll);
-        csvShit.add(saveCSV);
-        csvShit.add(addMarker);
-        csvShit.add(recordingHalt);
+        stateState.setMinimumSize(smallButtonDimensions);
+        stateState.setPreferredSize(smallButtonDimensions);
+        gearState.setMinimumSize(smallButtonDimensions);
+        gearState.setPreferredSize(smallButtonDimensions);
         saveCSV.setMinimumSize(smallButtonDimensions);
         saveCSV.setPreferredSize(smallButtonDimensions);
         addMarker.setMinimumSize(smallButtonDimensions);
         addMarker.setPreferredSize(smallButtonDimensions);
         recordingHalt.setMinimumSize(smallButtonDimensions);
         recordingHalt.setPreferredSize(smallButtonDimensions);
+        robotInfo.add(gearState);
+        robotInfo.add(stateState);
+        smallStreamHolder.add(leftCam);
+        smallStreamHolder.add(rightCam);
+        csvShit.add(saveCSV);
+        csvShit.add(addMarker);
+        csvShit.add(recordingHalt);
+        panel.add(main);
+        panel.add(right);
+        right.add(smallStreamHolder);
+        right.add(csvShit);
+        right.add(robotInfo);
+        right.add(infoScroll);
+        frame.setUndecorated(true);
+        frame.setContentPane(panel);
+        frame.setVisible(true);
+        frame.setSize(width(), WINDOW_HEIGHT);
         saveCSV.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -119,11 +137,6 @@ public class Main {
                 csv.addLine(new ArrayList<>(Collections.singletonList(line)));
             }
         });
-        frame.setUndecorated(true);
-        frame.setContentPane(panel);
-        frame.setVisible(true);
-        frame.setSize(width(), WINDOW_HEIGHT);
-        logFile = findLog();
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -144,13 +157,14 @@ public class Main {
             String m = info.get(currentIndex);
             if (m.startsWith("{")) {
                 try {
-                    ArrayList<Value> inilified = inlinify(new JSONObject(m),null);
+                    currentObject = new JSONObject(m);
+                    ArrayList<Value> inlinified = inlinify(currentObject, null);
                     if (record) {
-                        csv.addLine(lineify(inilified));
-                        csv.setTitles(titleify(inilified));
+                        csv.addLine(lineify(inlinified));
+                        csv.setTitles(titleify(inlinified));
                     }
                     StringBuilder infoBuilder = new StringBuilder();
-                    for (Value v : inilified) {
+                    for (Value v : inlinified) {
                         infoBuilder.append(v.getKey()).append(": ").append(v.value).append("\n");
                     }
                     infoView.setText(infoBuilder.toString());
@@ -179,12 +193,26 @@ public class Main {
         return t;
     }
 
+    private static void updateGear(boolean state) {
+        gearState.setText("⛭ " + (state ? "Power" : "Speed"));
+    }
+
+    private static void updateState(String state) {
+        stateState.setText("➲ " + state);
+    }
+
     private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
         ArrayList<Value> inlined = new ArrayList<>();
         Iterator<String> keys = jsonObject.keys();
         while (keys.hasNext()) {
             String key = keys.next();
             Object got = jsonObject.get(key);
+            if (key.equals("gear")) {
+                updateGear((boolean) got);
+            }
+            if (key.equals("current_state")) {
+                updateState((String) got);
+            }
             if (parent != null) key = parent + "->" + key;
             if (got instanceof JSONObject) {
                 inlined.addAll(inlinify((JSONObject) got, key));
@@ -221,7 +249,7 @@ public class Main {
 
     private static ArrayList<String> parse(File f) {
         ArrayList<String> array = new ArrayList<>();
-        Matcher m = Pattern.compile(splittingRegex).matcher(readFile(f));
+        Matcher m = Pattern.compile(SPLITTING_REGEX).matcher(readFile(f));
         while (m.find()) {
             array.add(m.group());
         }
@@ -240,7 +268,7 @@ public class Main {
 
     private static File findLog() {
         File log = null;
-        for (File file : Objects.requireNonNull(logFilesDir.listFiles(pathname -> pathname.getName().endsWith("dsevents")))) {
+        for (File file : Objects.requireNonNull(LOG_FILES_DIRECTORY.listFiles(pathname -> pathname.getName().endsWith("dsevents")))) {
             if (file.isFile()) {
                 if (log == null) {
                     log = file;
@@ -337,7 +365,7 @@ public class Main {
         public void updateStreams() {
             streams = new ArrayList<>();
             try {
-                Document document = Jsoup.connect("http://10.22.30.17:5800").get();
+                Document document = Jsoup.connect("http://10.22.30.17:5800").timeout(3500).get();
                 Elements links = document.select("a");
                 for (Element e : links) {
                     if (!e.text().equals("Snapshot"))
