@@ -15,14 +15,13 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.Timer;
 import java.util.*;
+import java.util.Timer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
-    private static final int STREAM_HEIGHT = 465;
     private static final File logFilesDir = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static JFrame frame;
     private static JPanel panel, right;
@@ -42,7 +41,7 @@ public class Main {
         StreamView main, leftCam, rightCam;
         JTextArea info;
         JPanel smallStreamHolder;
-        Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, WINDOW_HEIGHT - STREAM_HEIGHT - 20);
+        Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, 50);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
@@ -63,8 +62,8 @@ public class Main {
         recordingHalt = new JButton("Pause");
         addMarker = new JButton("Marker");
         saveCSV = new JButton("Save");
-        JScrollPane infoScroll=new JScrollPane(info);
-        Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 -80);
+        JScrollPane infoScroll = new JScrollPane(info);
+        Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 80);
         info.setEditable(false);
         infoScroll.setPreferredSize(infoSize);
         infoScroll.setMinimumSize(infoSize);
@@ -145,7 +144,7 @@ public class Main {
             String m = info.get(currentIndex);
             if (m.startsWith("{")) {
                 try {
-                    ArrayList<Value> inilified = inlinify(new JSONObject(m));
+                    ArrayList<Value> inilified = inlinify(new JSONObject(m),null);
                     if (record) {
                         csv.addLine(lineify(inilified));
                         csv.setTitles(titleify(inilified));
@@ -180,14 +179,15 @@ public class Main {
         return t;
     }
 
-    private static ArrayList<Value> inlinify(JSONObject jsonObject) {
+    private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
         ArrayList<Value> inlined = new ArrayList<>();
         Iterator<String> keys = jsonObject.keys();
         while (keys.hasNext()) {
             String key = keys.next();
             Object got = jsonObject.get(key);
+            if (parent != null) key = parent + "->" + key;
             if (got instanceof JSONObject) {
-                inlined.addAll(inlinify((JSONObject) got));
+                inlined.addAll(inlinify((JSONObject) got, key));
             } else if (got instanceof JSONArray) {
                 JSONArray arr = (JSONArray) got;
                 Value v = new Value();
