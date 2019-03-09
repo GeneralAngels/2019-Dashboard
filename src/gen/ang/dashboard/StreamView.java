@@ -60,14 +60,15 @@ public class StreamView extends JPanel {
         add(image);
         add(buttons);
         updateStreams();
+        updateStream();
     }
 
     public void updateStreams() {
         streams = new ArrayList<>();
-        updateStream();
+        streams.add("");
         new Thread(() -> {
             try {
-                Document document = Jsoup.connect("http://10.22.30.17:5800").timeout(3500).get();
+                Document document = Jsoup.connect("http://10.22.30.17:5800").get();
                 Elements links = document.select("a");
                 for (Element e : links) {
                     if (!e.text().equals("Snapshot"))
@@ -76,20 +77,18 @@ public class StreamView extends JPanel {
                 updateStream();
             } catch (Exception ignored) {
             }
-        });
+        }).start();
     }
 
     public void updateStream() {
         try {
             String url = null;
             if (streamIndex < streams.size())
-                url = "http://10.22.30.17:5800" + streams.get(streamIndex);
-//            String url = "http://localhost:5800";
-            String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + ((url != null) ? "<img height=\"100%\" width=\"100%\" src=\"" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Unable to load stream</p>") + "</body></html>";
+                url =  streams.get(streamIndex);
+            String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + ((url != null) ? (url.length() > 0 ? "<img height=\"100%\" width=\"100%\" src=\"http://10.22.30.17:5800" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Disabled</p>") : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Unable to load stream</p>") + "</body></html>";
             browser.loadHTML(html);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             System.out.println("Failed updating stream");
-            e.printStackTrace();
         }
     }
 
