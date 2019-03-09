@@ -87,7 +87,6 @@ public class StreamView extends JPanel {
 //            String url = "http://localhost:5800";
             String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + ((url != null) ? "<img height=\"100%\" width=\"100%\" src=\"" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Unable to load stream</p>") + "</body></html>";
             browser.loadHTML(html);
-            System.out.println(html);
         } catch (Exception e) {
             System.out.println("Failed updating stream");
             e.printStackTrace();
