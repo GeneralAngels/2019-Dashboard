@@ -61,9 +61,9 @@ public class Main {
 //        main = new StreamView("main");
 //        leftCam = new StreamView("left");
 //        rightCam = new StreamView("right");
-        main=new StreamView();
-        leftCam=new StreamView();
-        rightCam=new StreamView();
+        main=new StreamView("main");
+        leftCam=new StreamView("left");
+        rightCam=new StreamView("right");
         smallStreamHolder = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         smallStreamHolder.setLayout(new GridLayout(1, 2));
@@ -138,16 +138,6 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-//                main.resize();
-//                leftCam.resize();
-//                rightCam.resize();
-                try {
-                    main.update();
-//                    leftCam.update();
-//                    rightCam.update();
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
                 if (laps % 1000 == 0) logFile = findLog();
                 updateInfo(logFile, info);
                 laps++;
@@ -241,17 +231,6 @@ public class Main {
         return inlined;
     }
 
-    private static String readUntil(String src, char until) {
-        for (int i = 0; i < src.length(); i++) {
-            if (src.charAt(i) == until) return src.substring(0, i + 1);
-        }
-        return src;
-    }
-
-    private static String clean(String thing) {
-        return "";
-    }
-
     private static ArrayList<String> parse(File f) {
         ArrayList<String> array = new ArrayList<>();
         Matcher m = Pattern.compile(SPLITTING_REGEX).matcher(readFile(f));
@@ -284,7 +263,6 @@ public class Main {
                 }
             }
         }
-        System.out.println(log.toString());
         return log;
     }
 

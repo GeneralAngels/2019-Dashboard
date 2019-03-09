@@ -1,41 +1,34 @@
 package gen.ang.dashboard;
 
-import gen.ang.dashboard.mjpeg.ImagePanel;
-import gen.ang.dashboard.mjpeg.MjpegInputStream;
+import com.teamdev.jxbrowser.chromium.*;
+import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class StreamView extends JPanel {
 
     private static final int FONT_SIZE = 28;
-    private static final String CONTENT_LENGTH = "Content-length: ";
-    private static final String CONTENT_TYPE = "Content-type: image/jpeg";
     private ArrayList<String> streams;
-    private ImagePanel imagePanel;
-//    private JLabel imagePanel;
+    private Browser browser;
+    private BrowserView image;
     private JPanel buttons;
     private JButton refresh, next, previous;
-    private MjpegInputStream input;
-    private URLConnection connection;
     private int streamIndex = 0;
 
-    public StreamView() {
+    public StreamView(String name) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        imagePanel = new ImagePanel(null);
-//        imagePanel=new JLabel();
+        BrowserContextParams params = new BrowserContextParams("browser/" + name);
+        params.setStorageType(StorageType.DISK);
+        BrowserContext context = new BrowserContext(params);
+        browser = new Browser(BrowserType.LIGHTWEIGHT, context);
+        image = new BrowserView(browser);
         buttons = new JPanel();
         refresh = new JButton("⟳");
         next = new JButton("▶");
@@ -64,7 +57,7 @@ public class StreamView extends JPanel {
         buttons.add(previous);
         buttons.add(refresh);
         buttons.add(next);
-        add(imagePanel);
+        add(image);
         add(buttons);
         updateStreams();
     }
@@ -88,18 +81,17 @@ public class StreamView extends JPanel {
 
     public void updateStream() {
         try {
-//            input = new URL(streams.get(streamIndex)).openConnection().getInputStream();
-            connection= new URL("http://localhost:5800").openConnection();
-            connection.setReadTimeout(5000);
-            connection.connect();
-            input=new MjpegInputStream(connection.getInputStream());
+            String url = null;
+            if (streamIndex < streams.size())
+                url = "http://10.22.30.17:5800" + streams.get(streamIndex);
+//            String url = "http://localhost:5800";
+            String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + ((url != null) ? "<img height=\"100%\" width=\"100%\" src=\"" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Unable to load stream</p>") + "</body></html>";
+            browser.loadHTML(html);
+            System.out.println(html);
         } catch (Exception e) {
             System.out.println("Failed updating stream");
+            e.printStackTrace();
         }
-    }
-
-    public void update() throws Exception {
-        imagePanel.setImage(input.readFrame());
     }
 
     public void next() {
@@ -127,9 +119,10 @@ public class StreamView extends JPanel {
     @Override
     public void setSize(Dimension dimension) {
         Dimension streamView = new Dimension(dimension.width, dimension.height - 55);
-        imagePanel.setMinimumSize(streamView);
-        imagePanel.setMaximumSize(streamView);
-        imagePanel.setPreferredSize(streamView);
+        browser.setSize(streamView.width, streamView.height);
+        image.setMinimumSize(streamView);
+        image.setMaximumSize(streamView);
+        image.setPreferredSize(streamView);
         super.setPreferredSize(dimension);
         super.setMinimumSize(dimension);
         super.setMaximumSize(dimension);
