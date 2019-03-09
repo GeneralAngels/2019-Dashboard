@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Class-Path: license.jar jxbrowser-6.23.jar json-20180813.jar jxbrowser
+ -win64-6.23.jar wpiutil-java-3.0.0.jar ntcore-java-4.0.0.jar jsoup-1.
+ 11.3.jar ntcore-jni-4.0.0-all.jar
+Main-Class: gen.ang.dashboard.Main
+
