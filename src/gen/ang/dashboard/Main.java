@@ -276,6 +276,7 @@ public class Main {
             for (byte b : currentBuffer) fileReadBuilder.append((char) b);
             return fileReadBuilder.toString();
         } catch (Exception e) {
+            logFileInputStream = null;
             e.printStackTrace();
         }
         return "";
