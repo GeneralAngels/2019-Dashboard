@@ -33,12 +33,12 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        JButton saveCSV, addMarker, recordingHalt, clear;
-        StreamView main, leftCam, rightCam;
+        JButton save, marker, playPause, clear,exit;
+        StreamView main, leftCamera, rightCamera;
         JTextArea info;
         JScrollPane infoScroll;
-        JPanel smallStreamHolder, csvShit, robotInfo;
-        Dimension smallButtonDimensions = new Dimension((width() - 80) /8, 30);
+        JPanel smallStreamHolder, csv, robotInfo;
+        Dimension buttonDimensions = new Dimension((width() - 100) /10, 30);
         Dimension statesDimensions = new Dimension((width() - 80) /4, 30);
         Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 45);
         System.setProperty("sun.java2d.opengl", "true");
@@ -51,18 +51,19 @@ public class Main {
         panel = new JPanel();
         right = new JPanel();
         robotInfo = new JPanel();
-        csvShit = new JPanel();
+        csv = new JPanel();
         gearState = new TextView();
         stateState = new TextView();
         info = new JTextArea();
-        recordingHalt = new JButton("Pause");
-        addMarker = new JButton("Marker");
-        saveCSV = new JButton("Save");
+        playPause = new JButton("Pause");
+        marker = new JButton("Marker");
+        save = new JButton("Save");
         clear = new JButton("Clear");
+        exit = new JButton("Exit");
         infoScroll = new JScrollPane(info);
         main = new StreamView("main");
-        leftCam = new StreamView("left");
-        rightCam = new StreamView("right");
+        leftCamera = new StreamView("left");
+        rightCamera = new StreamView("right");
         smallStreamHolder = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         smallStreamHolder.setLayout(new GridLayout(1, 2));
@@ -72,8 +73,8 @@ public class Main {
         info.setForeground(Color.GREEN);
         gearState.setText("⛭ Unknown");
         stateState.setText("➤ Unknown");
-        leftCam.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
-        rightCam.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
+        leftCamera.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
+        rightCamera.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
         main.setSize(width() / 2, WINDOW_HEIGHT);
         infoScroll.setPreferredSize(infoSize);
         infoScroll.setMinimumSize(infoSize);
@@ -82,37 +83,40 @@ public class Main {
         stateState.setPreferredSize(statesDimensions);
         gearState.setMinimumSize(statesDimensions);
         gearState.setPreferredSize(statesDimensions);
-        saveCSV.setMinimumSize(smallButtonDimensions);
-        saveCSV.setPreferredSize(smallButtonDimensions);
-        clear.setMinimumSize(smallButtonDimensions);
-        clear.setPreferredSize(smallButtonDimensions);
-        addMarker.setMinimumSize(smallButtonDimensions);
-        addMarker.setPreferredSize(smallButtonDimensions);
-        recordingHalt.setMinimumSize(smallButtonDimensions);
-        recordingHalt.setPreferredSize(smallButtonDimensions);
+        save.setMinimumSize(buttonDimensions);
+        save.setPreferredSize(buttonDimensions);
+        clear.setMinimumSize(buttonDimensions);
+        clear.setPreferredSize(buttonDimensions);
+        marker.setMinimumSize(buttonDimensions);
+        marker.setPreferredSize(buttonDimensions);
+        playPause.setMinimumSize(buttonDimensions);
+        playPause.setPreferredSize(buttonDimensions);
+        exit.setMinimumSize(buttonDimensions);
+        exit.setPreferredSize(buttonDimensions);
         robotInfo.add(gearState);
         robotInfo.add(stateState);
-        smallStreamHolder.add(leftCam);
-        smallStreamHolder.add(rightCam);
-        csvShit.add(saveCSV);
-        csvShit.add(clear);
-        csvShit.add(addMarker);
-        csvShit.add(recordingHalt);
+        smallStreamHolder.add(leftCamera);
+        smallStreamHolder.add(rightCamera);
+        csv.add(save);
+        csv.add(clear);
+        csv.add(marker);
+        csv.add(playPause);
+        csv.add(exit);
         panel.add(main);
         panel.add(right);
         right.add(smallStreamHolder);
-        right.add(csvShit);
+        right.add(csv);
         right.add(robotInfo);
         right.add(infoScroll);
         frame.setUndecorated(true);
         frame.setContentPane(panel);
         frame.setVisible(true);
         frame.setSize(width(), WINDOW_HEIGHT);
-        saveCSV.addActionListener(new AbstractAction() {
+        save.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    csv.save();
+                    Main.csv.save();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(null, "Not Saved!");
@@ -122,25 +126,31 @@ public class Main {
         clear.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                csv.clear();
+                Main.csv.clear();
             }
         });
-        recordingHalt.addActionListener(new AbstractAction() {
+        playPause.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 record = !record;
                 if (record) {
-                    recordingHalt.setText("Pause");
+                    playPause.setText("Pause");
                 } else {
-                    recordingHalt.setText("Resume");
+                    playPause.setText("Resume");
                 }
             }
         });
-        addMarker.addActionListener(new AbstractAction() {
+        marker.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String line = JOptionPane.showInputDialog("Marker");
-                csv.addLine(new ArrayList<>(Collections.singletonList(line)));
+                Main.csv.addLine(new ArrayList<>(Collections.singletonList(line)));
+            }
+        });
+        exit.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
             }
         });
         new Timer().scheduleAtFixedRate(new TimerTask() {
