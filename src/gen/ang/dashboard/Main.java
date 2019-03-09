@@ -1,5 +1,8 @@
 package gen.ang.dashboard;
 
+import edu.wpi.first.networktables.EntryListenerFlags;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -7,30 +10,27 @@ import org.json.JSONObject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
 
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
-    private static final File LOG_FILES_DIRECTORY = new File("C:\\Users\\Public\\Documents\\FRC\\Log Files");
     private static final String SPLITTING_REGEX = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
     private static JFrame frame;
     private static JPanel panel, right;
     private static TextView gearState, stateState;
     private static JSONObject currentObject;
-    private static File logFile;
     private static CSV csv = new CSV();
     private static boolean record = true;
-    private static int currentIndex = 0;
-    private static long laps = 0;
-    private static boolean dsState = false;
-    private static StringBuilder fileReadBuilder;
-    private static FileInputStream logFileInputStream;
     private static NetworkTableInstance nti;
-    private static byte[] currentBuffer;
+    private static NetworkTable database;
 
     private static int width() {
         return Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -118,7 +118,8 @@ public class Main {
         frame.setVisible(true);
         frame.setSize(width(), WINDOW_HEIGHT);
         nti = NetworkTableInstance.getDefault();
-
+        database = nti.getTable("database");
+        NetworkTableEntry json = database.getEntry("json");
         save.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -160,20 +161,11 @@ public class Main {
                 System.exit(0);
             }
         });
-        nti.addEntryListener("json", entryNotification -> {
-            updateInfo(entryNotification.value.getString(), info);
-        }, 0);
-//        new Timer().scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                boolean tempState = getDSState();
-//                if (laps % 10 == 0 || dsState != tempState) logFile = findLog();
-//                updateInfo(logFile, info);
-//                dsState = tempState;
-//                laps++;
-//                nti.
-//            }
-//        }, 1000, 500);
+        nti.startClientTeam(2230);
+        nti.startDSClient();
+        database.addEntryListener("json", (networkTable, s, networkTableEntry, networkTableValue, i) -> {
+            updateInfo(networkTableValue.getString(), info);
+        }, EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
     }
 
     private static void updateInfo(String s, JTextArea infoView) {
@@ -253,82 +245,6 @@ public class Main {
             }
         }
         return inlined;
-    }
-
-    private static ArrayList<String> parse(File f) {
-        ArrayList<String> array = new ArrayList<>();
-        Matcher m = Pattern.compile(SPLITTING_REGEX).matcher(readFile(f));
-        while (m.find()) {
-            array.add(m.group());
-        }
-        return array;
-//        return readFile(f).split("<message> ");
-    }
-
-    public static String readFile(File file) {
-        try {
-            if (logFileInputStream == null) {
-                logFileInputStream = new FileInputStream(file);
-            }
-            fileReadBuilder = new StringBuilder();
-            currentBuffer = new byte[logFileInputStream.available() + 1];
-            logFileInputStream.read(currentBuffer);
-            for (byte b : currentBuffer) fileReadBuilder.append((char) b);
-            return fileReadBuilder.toString();
-        } catch (Exception e) {
-            logFileInputStream = null;
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    private static File findLog() {
-        File log = null;
-        for (File file : Objects.requireNonNull(LOG_FILES_DIRECTORY.listFiles(pathname -> pathname.getName().endsWith("dsevents")))) {
-            if (file.isFile()) {
-                if (log == null) {
-                    log = file;
-                } else {
-                    if (log.lastModified() < file.lastModified()) {
-                        log = file;
-                    }
-                }
-            }
-        }
-//        System.out.println("Update log");
-        return log;
-    }
-
-    private static boolean getDSState() {
-        String DRIVER_STATION = "DriverStation.exe";
-        return isRunning(DRIVER_STATION);
-    }
-
-    private static void startDS() {
-        String DRIVER_STATION = "DriverStation.exe";
-        String DRIVER_STATION_FULL_PATH = "C:\\Program Files (x86)\\FRC Driver Station\\" + DRIVER_STATION;
-        try {
-            if (!isRunning(DRIVER_STATION))
-                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + DRIVER_STATION_FULL_PATH);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static boolean isRunning(String processName) {
-        try {
-            String line;
-            StringBuilder pidInfo = new StringBuilder();
-            Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe");
-            BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            while ((line = input.readLine()) != null) {
-                pidInfo.append(line);
-            }
-            input.close();
-            return pidInfo.toString().contains(processName);
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     static class Value {
