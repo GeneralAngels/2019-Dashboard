@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Timer;
 import java.util.*;
@@ -27,10 +26,10 @@ public class Main {
     private static boolean record = true;
     private static int currentIndex = 0;
     private static long laps = 0;
-    private static long lastByte = 0;
     private static boolean dsState = false;
-    private static StringBuilder fileReadBuilder = new StringBuilder();
+    private static StringBuilder fileReadBuilder;
     private static FileInputStream logFileInputStream;
+    private static byte[] currentBuffer;
 
     private static int width() {
         return Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -266,18 +265,15 @@ public class Main {
 //        return readFile(f).split("<message> ");
     }
 
-    private static byte[] currentBuffer=new byte[128];
-
     public static String readFile(File file) {
         try {
             if (logFileInputStream == null) {
                 logFileInputStream = new FileInputStream(file);
             }
             fileReadBuilder = new StringBuilder();
-            logFileInputStream.skip(lastByte);
-            currentBuffer=new byte[logFileInputStream.available()+1];
+            currentBuffer = new byte[logFileInputStream.available() + 1];
             logFileInputStream.read(currentBuffer);
-            for(byte b:currentBuffer)fileReadBuilder.append((char)b);
+            for (byte b : currentBuffer) fileReadBuilder.append((char) b);
             return fileReadBuilder.toString();
         } catch (Exception e) {
             e.printStackTrace();
