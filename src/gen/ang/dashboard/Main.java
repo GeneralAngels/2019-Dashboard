@@ -65,6 +65,7 @@ public class Main {
         leftCamera = new StreamView("left");
         rightCamera = new StreamView("right");
         smallStreamHolder = new JPanel();
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         panel.setLayout(new GridLayout(1, 2));
         smallStreamHolder.setLayout(new GridLayout(1, 2));
         robotInfo.setLayout(new GridLayout(1, 2));
