@@ -27,7 +27,10 @@ public class Main {
     private static boolean record = true;
     private static int currentIndex = 0;
     private static long laps = 0;
+    private static long lastByte = 0;
     private static boolean dsState = false;
+    private static StringBuilder fileReadBuilder = new StringBuilder();
+    private static FileInputStream logFileInputStream;
 
     private static int width() {
         return Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -263,9 +266,19 @@ public class Main {
 //        return readFile(f).split("<message> ");
     }
 
+    private static byte[] currentBuffer=new byte[128];
+
     public static String readFile(File file) {
         try {
-            return new String(Files.readAllBytes(file.toPath()));
+            if (logFileInputStream == null) {
+                logFileInputStream = new FileInputStream(file);
+            }
+            fileReadBuilder = new StringBuilder();
+            logFileInputStream.skip(lastByte);
+            currentBuffer=new byte[logFileInputStream.available()+1];
+            logFileInputStream.read(currentBuffer);
+            for(byte b:currentBuffer)fileReadBuilder.append((char)b);
+            return fileReadBuilder.toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
