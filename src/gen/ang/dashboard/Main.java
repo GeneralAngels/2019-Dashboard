@@ -27,19 +27,20 @@ public class Main {
     private static boolean record = true;
     private static int currentIndex = 0;
     private static long laps = 0;
+    private static boolean dsState = false;
 
     private static int width() {
         return Toolkit.getDefaultToolkit().getScreenSize().width;
     }
 
     public static void main(String[] args) {
-        JButton save, marker, playPause, clear,exit;
+        JButton save, marker, playPause, clear, exit;
         StreamView main, leftCamera, rightCamera;
         JTextArea info;
         JScrollPane infoScroll;
         JPanel smallStreamHolder, csv, robotInfo;
-        Dimension buttonDimensions = new Dimension((width() - 100) /10, 30);
-        Dimension statesDimensions = new Dimension((width() - 80) /4, 30);
+        Dimension buttonDimensions = new Dimension((width() - 100) / 10, 30);
+        Dimension statesDimensions = new Dimension((width() - 80) / 4, 30);
         Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 45);
         System.setProperty("sun.java2d.opengl", "true");
         try {
@@ -157,11 +158,13 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (laps % 1000 == 0) logFile = findLog();
+                boolean tempState = getDSState();
+                if (laps % 10 == 0 || dsState != tempState) logFile = findLog();
                 updateInfo(logFile, info);
+                dsState = tempState;
                 laps++;
             }
-        }, 1000, 100);
+        }, 1000, 500);
     }
 
     private static void updateInfo(File f, JTextArea infoView) {
@@ -282,7 +285,13 @@ public class Main {
                 }
             }
         }
+        System.out.println("Update log");
         return log;
+    }
+
+    private static boolean getDSState() {
+        String DRIVER_STATION = "DriverStation.exe";
+        return isRunning(DRIVER_STATION);
     }
 
     private static void startDS() {
