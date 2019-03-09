@@ -285,7 +285,7 @@ public class Main {
                 }
             }
         }
-        System.out.println("Update log");
+//        System.out.println("Update log");
         return log;
     }
 
