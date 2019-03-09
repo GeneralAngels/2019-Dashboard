@@ -1,13 +1,7 @@
 package gen.ang.dashboard;
 
-import com.teamdev.jxbrowser.chromium.*;
-import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,6 +40,7 @@ public class Main {
         JPanel smallStreamHolder, csvShit, robotInfo;
         Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, 30);
         Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 45);
+        System.setProperty("sun.java2d.opengl", "true");
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
@@ -63,9 +58,12 @@ public class Main {
         addMarker = new JButton("Marker");
         saveCSV = new JButton("Save");
         infoScroll = new JScrollPane(info);
-        main = new StreamView("main");
-        leftCam = new StreamView("left");
-        rightCam = new StreamView("right");
+//        main = new StreamView("main");
+//        leftCam = new StreamView("left");
+//        rightCam = new StreamView("right");
+        main=new StreamView();
+        leftCam=new StreamView();
+        rightCam=new StreamView();
         smallStreamHolder = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         smallStreamHolder.setLayout(new GridLayout(1, 2));
@@ -140,9 +138,16 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                main.resize();
-                leftCam.resize();
-                rightCam.resize();
+//                main.resize();
+//                leftCam.resize();
+//                rightCam.resize();
+                try {
+                    main.update();
+//                    leftCam.update();
+//                    rightCam.update();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
                 if (laps % 1000 == 0) logFile = findLog();
                 updateInfo(logFile, info);
                 laps++;
@@ -307,119 +312,6 @@ public class Main {
             return pidInfo.toString().contains(processName);
         } catch (Exception e) {
             return false;
-        }
-    }
-
-    static class StreamView extends JPanel {
-
-        private static final int FONT_SIZE = 28;
-
-        private Browser browser;
-        private BrowserView browserView;
-        private ArrayList<String> streams;
-        private JPanel buttons;
-        private JButton refresh, next, previous;
-        private int streamIndex = 0;
-
-        public StreamView(String name) {
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            BrowserContextParams params = new BrowserContextParams("temp/browser/" + name);
-            params.setStorageType(StorageType.DISK);
-            BrowserContext context = new BrowserContext(params);
-            browser = new Browser(BrowserType.LIGHTWEIGHT, context);
-            browserView = new BrowserView(browser);
-            buttons = new JPanel();
-            refresh = new JButton("⟳");
-            next = new JButton("▶");
-            previous = new JButton("◀");
-            refresh.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, FONT_SIZE));
-            next.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, FONT_SIZE));
-            previous.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, FONT_SIZE));
-            refresh.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    updateStreams();
-                }
-            });
-            next.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    next();
-                }
-            });
-            previous.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    previous();
-                }
-            });
-            buttons.add(previous);
-            buttons.add(refresh);
-            buttons.add(next);
-            add(browserView);
-            add(buttons);
-            updateStreams();
-            updateStream();
-        }
-
-        public void updateStreams() {
-            streams = new ArrayList<>();
-            try {
-                Document document = Jsoup.connect("http://10.22.30.17:5800").timeout(3500).get();
-                Elements links = document.select("a");
-                for (Element e : links) {
-                    if (!e.text().equals("Snapshot"))
-                        streams.add(e.attr("href").replace("_viewer", ""));
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        public void resize() {
-            browser.executeJavaScript("document.getElementsByTagName('img')[0].style.height=\"100%\";document.getElementsByTagName('img')[0].style.width=\"100%\";");
-        }
-
-        public void updateStream() {
-            if (streamIndex < streams.size())
-                browser.loadURL("http://10.22.30.17:5800" + streams.get(streamIndex));
-        }
-
-        public void next() {
-            if (streams.size() > 0) {
-                if (streamIndex < streams.size() - 1) {
-                    streamIndex++;
-                } else {
-                    streamIndex = 0;
-                }
-                updateStream();
-            }
-        }
-
-        public void previous() {
-            if (streams.size() > 0) {
-                if (streamIndex > 0) {
-                    streamIndex--;
-                } else {
-                    streamIndex = streams.size() - 1;
-                }
-                updateStream();
-            }
-        }
-
-        @Override
-        public void setSize(Dimension dimension) {
-            Dimension streamView = new Dimension(dimension.width, dimension.height - 55);
-            browserView.setMinimumSize(streamView);
-            browserView.setMaximumSize(streamView);
-            browserView.setPreferredSize(streamView);
-            super.setPreferredSize(dimension);
-            super.setMinimumSize(dimension);
-            super.setMaximumSize(dimension);
-        }
-
-        @Override
-        public void setSize(int width, int height) {
-            setSize(new Dimension(width, height));
         }
     }
 

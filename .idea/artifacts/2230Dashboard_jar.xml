@@ -8,11 +8,8 @@
         </element>
         <element id="module-output" name="2230Dashboard" />
       </element>
-      <element id="library" level="project" name="license" />
       <element id="library" level="project" name="org.jsoup:jsoup:1.11.3" />
       <element id="library" level="project" name="org.json:json:20180813" />
-      <element id="library" level="project" name="jxbrowser-win64-6.22" />
-      <element id="library" level="project" name="jxbrowser-6.22" />
     </root>
   </artifact>
 </component>
