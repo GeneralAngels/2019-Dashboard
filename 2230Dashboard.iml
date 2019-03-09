@@ -12,5 +12,6 @@
     <orderEntry type="library" name="jxbrowser-6.23" level="project" />
     <orderEntry type="library" name="jxbrowser-win64-6.23" level="project" />
     <orderEntry type="library" name="license" level="project" />
+    <orderEntry type="library" name="ntcore-java-4.0.0" level="project" />
   </component>
 </module>

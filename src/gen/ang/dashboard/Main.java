@@ -1,5 +1,6 @@
 package gen.ang.dashboard;
 
+import edu.wpi.first.networktables.NetworkTableInstance;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -8,7 +9,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Timer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +29,7 @@ public class Main {
     private static boolean dsState = false;
     private static StringBuilder fileReadBuilder;
     private static FileInputStream logFileInputStream;
+    private static NetworkTableInstance nti;
     private static byte[] currentBuffer;
 
     private static int width() {
@@ -116,6 +117,8 @@ public class Main {
         frame.setContentPane(panel);
         frame.setVisible(true);
         frame.setSize(width(), WINDOW_HEIGHT);
+        nti = NetworkTableInstance.getDefault();
+
         save.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -157,43 +160,40 @@ public class Main {
                 System.exit(0);
             }
         });
-        new Timer().scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                boolean tempState = getDSState();
-                if (laps % 10 == 0 || dsState != tempState) logFile = findLog();
-                updateInfo(logFile, info);
-                dsState = tempState;
-                laps++;
-            }
-        }, 1000, 500);
+        nti.addEntryListener("json", entryNotification -> {
+            updateInfo(entryNotification.value.getString(), info);
+        }, 0);
+//        new Timer().scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                boolean tempState = getDSState();
+//                if (laps % 10 == 0 || dsState != tempState) logFile = findLog();
+//                updateInfo(logFile, info);
+//                dsState = tempState;
+//                laps++;
+//                nti.
+//            }
+//        }, 1000, 500);
     }
 
-    private static void updateInfo(File f, JTextArea infoView) {
-        ArrayList<String> info = parse(f);
-        if (currentIndex > info.size()) currentIndex = 0;
-        for (; currentIndex < info.size(); currentIndex++) {
-            String m = info.get(currentIndex);
-            if (m.startsWith("{")) {
-                try {
-                    currentObject = new JSONObject(m);
-                    ArrayList<Value> inlinified = inlinify(currentObject, null);
-                    if (record) {
-                        csv.addLine(lineify(inlinified));
-                        csv.setTitles(titleify(inlinified));
-                    }
-                    StringBuilder infoBuilder = new StringBuilder();
-                    for (Value v : inlinified) {
-                        infoBuilder.append(v.getKey()).append(": ").append(v.value).append("\n");
-                    }
-                    infoView.setText(infoBuilder.toString());
-                } catch (Exception e) {
-                    e.printStackTrace();
+    private static void updateInfo(String s, JTextArea infoView) {
+        if (s.startsWith("{")) {
+            try {
+                currentObject = new JSONObject(s);
+                ArrayList<Value> inlinified = inlinify(currentObject, null);
+                if (record) {
+                    csv.addLine(lineify(inlinified));
+                    csv.setTitles(titleify(inlinified));
                 }
+                StringBuilder infoBuilder = new StringBuilder();
+                for (Value v : inlinified) {
+                    infoBuilder.append(v.getKey()).append(": ").append(v.value).append("\n");
+                }
+                infoView.setText(infoBuilder.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-//        String message = info[info.length - 1];
-
     }
 
     private static ArrayList<String> titleify(ArrayList<Value> values) {
