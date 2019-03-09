@@ -33,12 +33,13 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        JButton saveCSV, addMarker, recordingHalt;
+        JButton saveCSV, addMarker, recordingHalt, clear;
         StreamView main, leftCam, rightCam;
         JTextArea info;
         JScrollPane infoScroll;
         JPanel smallStreamHolder, csvShit, robotInfo;
-        Dimension smallButtonDimensions = new Dimension((width() - 30) / 6, 30);
+        Dimension smallButtonDimensions = new Dimension((width() - 80) /8, 30);
+        Dimension statesDimensions = new Dimension((width() - 80) /4, 30);
         Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 45);
         System.setProperty("sun.java2d.opengl", "true");
         try {
@@ -57,13 +58,11 @@ public class Main {
         recordingHalt = new JButton("Pause");
         addMarker = new JButton("Marker");
         saveCSV = new JButton("Save");
+        clear = new JButton("Clear");
         infoScroll = new JScrollPane(info);
-//        main = new StreamView("main");
-//        leftCam = new StreamView("left");
-//        rightCam = new StreamView("right");
-        main=new StreamView("main");
-        leftCam=new StreamView("left");
-        rightCam=new StreamView("right");
+        main = new StreamView("main");
+        leftCam = new StreamView("left");
+        rightCam = new StreamView("right");
         smallStreamHolder = new JPanel();
         panel.setLayout(new GridLayout(1, 2));
         smallStreamHolder.setLayout(new GridLayout(1, 2));
@@ -72,19 +71,21 @@ public class Main {
         info.setBackground(Color.BLACK);
         info.setForeground(Color.GREEN);
         gearState.setText("⛭ Unknown");
-        stateState.setText("➲ Unknown");
+        stateState.setText("➤ Unknown");
         leftCam.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
         rightCam.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
         main.setSize(width() / 2, WINDOW_HEIGHT);
         infoScroll.setPreferredSize(infoSize);
         infoScroll.setMinimumSize(infoSize);
         infoScroll.setMaximumSize(infoSize);
-        stateState.setMinimumSize(smallButtonDimensions);
-        stateState.setPreferredSize(smallButtonDimensions);
-        gearState.setMinimumSize(smallButtonDimensions);
-        gearState.setPreferredSize(smallButtonDimensions);
+        stateState.setMinimumSize(statesDimensions);
+        stateState.setPreferredSize(statesDimensions);
+        gearState.setMinimumSize(statesDimensions);
+        gearState.setPreferredSize(statesDimensions);
         saveCSV.setMinimumSize(smallButtonDimensions);
         saveCSV.setPreferredSize(smallButtonDimensions);
+        clear.setMinimumSize(smallButtonDimensions);
+        clear.setPreferredSize(smallButtonDimensions);
         addMarker.setMinimumSize(smallButtonDimensions);
         addMarker.setPreferredSize(smallButtonDimensions);
         recordingHalt.setMinimumSize(smallButtonDimensions);
@@ -94,6 +95,7 @@ public class Main {
         smallStreamHolder.add(leftCam);
         smallStreamHolder.add(rightCam);
         csvShit.add(saveCSV);
+        csvShit.add(clear);
         csvShit.add(addMarker);
         csvShit.add(recordingHalt);
         panel.add(main);
@@ -115,6 +117,12 @@ public class Main {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(null, "Not Saved!");
                 }
+            }
+        });
+        clear.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                csv.clear();
             }
         });
         recordingHalt.addActionListener(new AbstractAction() {
@@ -193,7 +201,7 @@ public class Main {
     }
 
     private static void updateState(String state) {
-        stateState.setText("➲ " + state);
+        stateState.setText("➤ " + state);
     }
 
     private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
@@ -324,6 +332,10 @@ public class Main {
 
         public void addLine(ArrayList<String> values) {
             lines.add(values);
+        }
+
+        public void clear() {
+            lines.clear();
         }
 
         public void save() throws IOException {

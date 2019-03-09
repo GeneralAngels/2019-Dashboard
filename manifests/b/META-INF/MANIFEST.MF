@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Class-Path: license.jar json-20180813.jar jxbrowser-6.23.jar jxbrowser
+ -win64-6.23.jar jsoup-1.11.3.jar
+Main-Class: gen.ang.dashboard.Main
+
