@@ -24,6 +24,7 @@ public class StreamView extends JPanel {
 
     public StreamView(String name) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        BrowserPreferences.setChromiumSwitches("--disable-gpu","--proxy-server='direct://'","--proxy-bypass-list=*");
         BrowserContextParams params = new BrowserContextParams("browser/" + name);
         params.setStorageType(StorageType.DISK);
         BrowserContext context = new BrowserContext(params);
@@ -95,8 +96,9 @@ public class StreamView extends JPanel {
             }
             String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + ((url != null) ? (url.length() > 0 ? "<img height=\"100%\" width=\"100%\" src=\"http://10.22.30.17:5800" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Disabled</p>") : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Unable to load stream</p>") + "</body></html>";
             browser.loadHTML(html);
-        } catch (Exception ignored) {
-            System.out.println("Failed updating stream");
+        } catch (Exception e) {
+            System.out.print("Failed updating stream: ");
+            e.printStackTrace();
         }
     }
 

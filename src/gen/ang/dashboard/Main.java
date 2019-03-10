@@ -209,7 +209,7 @@ public class Main {
     }
 
     private static void updateRobotState(boolean state) {
-        stateState.setText("➤ " + (state?"Auto ⚠":"Manual"));
+        stateState.setText("➤ " + (state?"Auto \uD83D\uDDF2":"Manual"));
     }
 
     private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
