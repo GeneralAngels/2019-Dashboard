@@ -24,7 +24,8 @@ public class StreamView extends JPanel {
 
     public StreamView(String name) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        BrowserPreferences.setChromiumSwitches("--disable-gpu","--proxy-server='direct://'","--proxy-bypass-list=*");
+//        BrowserPreferences.setChromiumSwitches("--disable-gpu","--proxy-server='direct://'","--proxy-bypass-list=*");
+        BrowserPreferences.setChromiumSwitches("--proxy-server='direct://'","--proxy-bypass-list=*");
         BrowserContextParams params = new BrowserContextParams("browser/" + name);
         params.setStorageType(StorageType.DISK);
         BrowserContext context = new BrowserContext(params);
