@@ -208,8 +208,8 @@ public class Main {
         gearState.setText("⛭ " + (state ? "Power" : "Speed"));
     }
 
-    private static void updateState(String state) {
-        stateState.setText("➤ " + state);
+    private static void updateRobotState(boolean state) {
+        stateState.setText("➤ " + (state?"Auto ⚠":"Manual"));
     }
 
     private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
@@ -221,8 +221,8 @@ public class Main {
             if (key.equals("gear")) {
                 updateGear((boolean) got);
             }
-            if (key.equals("current_state")) {
-                updateState((String) got);
+            if (key.equals("autonomous")) {
+                updateRobotState((boolean) got);
             }
             if (parent != null) key = parent + "->" + key;
             if (got instanceof JSONObject) {
