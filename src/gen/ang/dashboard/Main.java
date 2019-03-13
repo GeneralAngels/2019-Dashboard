@@ -38,7 +38,7 @@ public class Main {
 
     public static void main(String[] args) {
         JButton save, marker, playPause, clear, exit;
-        StreamView main, leftCamera, rightCamera;
+        StreamView mainCamera, secondaryCamera;
         JTextArea info;
         JScrollPane infoScroll;
         JPanel smallStreamHolder, csv, robotInfo;
@@ -65,9 +65,8 @@ public class Main {
         clear = new JButton("Clear");
         exit = new JButton("Exit");
         infoScroll = new JScrollPane(info);
-        main = new StreamView("main");
-        leftCamera = new StreamView("left");
-        rightCamera = new StreamView("right");
+        mainCamera = new StreamView("main");
+        secondaryCamera = new StreamView("left");
         smallStreamHolder = new JPanel();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         panel.setLayout(new GridLayout(1, 2));
@@ -78,9 +77,8 @@ public class Main {
         info.setForeground(Color.GREEN);
         gearState.setText("⛭ Unknown");
         stateState.setText("➤ Unknown");
-        leftCamera.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
-        rightCamera.setSize((width() / 4) - 10, (int) (WINDOW_HEIGHT / 2.5));
-        main.setSize(width() / 2, WINDOW_HEIGHT);
+        secondaryCamera.setSize((width() / 2) - 10, (int) (WINDOW_HEIGHT / 2.5));
+        mainCamera.setSize(width() / 2, WINDOW_HEIGHT);
         infoScroll.setPreferredSize(infoSize);
         infoScroll.setMinimumSize(infoSize);
         infoScroll.setMaximumSize(infoSize);
@@ -100,14 +98,13 @@ public class Main {
         exit.setPreferredSize(buttonDimensions);
         robotInfo.add(gearState);
         robotInfo.add(stateState);
-        smallStreamHolder.add(leftCamera);
-        smallStreamHolder.add(rightCamera);
+        smallStreamHolder.add(secondaryCamera);
         csv.add(save);
         csv.add(clear);
         csv.add(marker);
         csv.add(playPause);
         csv.add(exit);
-        panel.add(main);
+        panel.add(mainCamera);
         panel.add(right);
         right.add(smallStreamHolder);
         right.add(csv);
@@ -163,9 +160,7 @@ public class Main {
         });
         nti.startClientTeam(2230);
         nti.startDSClient();
-        database.addEntryListener("json", (networkTable, s, networkTableEntry, networkTableValue, i) -> {
-            updateInfo(networkTableValue.getString(), info);
-        }, EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
+        json.addListener(entryNotification -> updateInfo(entryNotification.value.getString(), info), EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
     }
 
     private static void updateInfo(String s, JTextArea infoView) {
@@ -209,7 +204,7 @@ public class Main {
     }
 
     private static void updateRobotState(boolean state) {
-        stateState.setText("➤ " + (state?"Auto \uD83D\uDDF2":"Manual"));
+        stateState.setText("➤ " + (state ? "Auto \uD83D\uDDF2" : "Manual"));
     }
 
     private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
