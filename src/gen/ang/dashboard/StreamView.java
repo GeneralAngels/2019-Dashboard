@@ -24,7 +24,7 @@ public class StreamView extends JPanel {
 
     public StreamView(String name) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        BrowserPreferences.setChromiumSwitches("--disable-gpu","--proxy-server='direct://'","--proxy-bypass-list=*");
+        BrowserPreferences.setChromiumSwitches("--disable-gpu", "--proxy-server='direct://'", "--proxy-bypass-list=*");
         BrowserContextParams params = new BrowserContextParams("browser/" + name);
         params.setStorageType(StorageType.DISK);
         BrowserContext context = new BrowserContext(params);
@@ -78,7 +78,7 @@ public class StreamView extends JPanel {
                         streams.add(url);
                     }
                 }
-                if(streams.size()==1)System.out.println("Found None!");
+                if (streams.size() == 1) System.out.println("Found None!");
                 updateStream();
             } catch (Exception ignored) {
             }
@@ -94,6 +94,7 @@ public class StreamView extends JPanel {
                 streamIndex = 0;
                 url = streams.get(streamIndex);
             }
+            if (url.length() != 0) url += "&bitrate=250000&quality=20&width=150&height=150";
             String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + ((url != null) ? (url.length() > 0 ? "<img height=\"100%\" width=\"100%\" src=\"http://10.22.30.17:5800" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Disabled</p>") : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Unable to load stream</p>") + "</body></html>";
             browser.loadHTML(html);
         } catch (Exception e) {
