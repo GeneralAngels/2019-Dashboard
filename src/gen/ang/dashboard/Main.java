@@ -1,9 +1,6 @@
 package gen.ang.dashboard;
 
-import edu.wpi.first.networktables.EntryListenerFlags;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -19,13 +16,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 public class Main {
     private static final int WINDOW_HEIGHT = 528;
     private static final String SPLITTING_REGEX = "(?<=\\<message\\> )(([\\u0020-\\u003B]|[=]|[\\u003F-\\u007D])+)";
     private static JFrame frame;
     private static JPanel panel, right;
-    private static TextView gearState, stateState;
+    private static TextView gearState, stateState, batteryState;
     private static JSONObject currentObject;
     private static CSV csv = new CSV();
     private static boolean record = true;
@@ -43,7 +41,7 @@ public class Main {
         JScrollPane infoScroll;
         JPanel smallStreamHolder, csv, robotInfo;
         Dimension buttonDimensions = new Dimension((width() - 100) / 10, 30);
-        Dimension statesDimensions = new Dimension((width() - 80) / 4, 30);
+        Dimension statesDimensions = new Dimension((width() - 80) / 6, 30);
         Dimension infoSize = new Dimension(width() / 2 - 20, WINDOW_HEIGHT / 2 - 45);
         System.setProperty("sun.java2d.opengl", "true");
         try {
@@ -58,6 +56,7 @@ public class Main {
         csv = new JPanel();
         gearState = new TextView();
         stateState = new TextView();
+        batteryState = new TextView();
         info = new JTextArea();
         playPause = new JButton("Pause");
         marker = new JButton("Marker");
@@ -77,6 +76,7 @@ public class Main {
         info.setForeground(Color.GREEN);
         gearState.setText("⛭ Unknown");
         stateState.setText("➤ Unknown");
+        batteryState.setText("\uD83D\uDDF2 Unknown");
         secondaryCamera.setSize((width() / 2) - 10, (int) (WINDOW_HEIGHT / 2.5));
         mainCamera.setSize(width() / 2, WINDOW_HEIGHT);
         infoScroll.setPreferredSize(infoSize);
@@ -86,6 +86,8 @@ public class Main {
         stateState.setPreferredSize(statesDimensions);
         gearState.setMinimumSize(statesDimensions);
         gearState.setPreferredSize(statesDimensions);
+        batteryState.setMinimumSize(statesDimensions);
+        batteryState.setPreferredSize(statesDimensions);
         save.setMinimumSize(buttonDimensions);
         save.setPreferredSize(buttonDimensions);
         clear.setMinimumSize(buttonDimensions);
@@ -98,6 +100,7 @@ public class Main {
         exit.setPreferredSize(buttonDimensions);
         robotInfo.add(gearState);
         robotInfo.add(stateState);
+        robotInfo.add(batteryState);
         smallStreamHolder.add(secondaryCamera);
         csv.add(save);
         csv.add(clear);
@@ -117,6 +120,7 @@ public class Main {
         nti = NetworkTableInstance.getDefault();
         database = nti.getTable("database");
         NetworkTableEntry json = database.getEntry("json");
+        NetworkTableEntry battery = database.getEntry("battery");
         save.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -161,6 +165,11 @@ public class Main {
         nti.startClientTeam(2230);
         nti.startDSClient();
         json.addListener(entryNotification -> updateInfo(entryNotification.value.getString(), info), EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
+        battery.addListener(entryNotification -> updateBattery(entryNotification.value.getString()),EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
+    }
+
+    private static void updateBattery(String value){
+        batteryState.setText("\uD83D\uDDF2 "+value+"%");
     }
 
     private static void updateInfo(String s, JTextArea infoView) {
@@ -204,7 +213,7 @@ public class Main {
     }
 
     private static void updateRobotState(boolean state) {
-        stateState.setText("➤ " + (state ? "Auto \uD83D\uDDF2" : "Manual"));
+        stateState.setText("➤ " + (state ? "Auto" : "Manual"));
     }
 
     private static ArrayList<Value> inlinify(JSONObject jsonObject, String parent) {
