@@ -97,7 +97,7 @@ public class StreamView extends JPanel {
                 streamIndex = 0;
                 url = streams.get(streamIndex);
             }
-            if (url.length() != 0) url += "&bitrate=250000&quality=60&width=200&height=200";
+            if (url.length() != 0) url += "&bitrate=250000&quality=20&width=200&height=200";
             String html = "<html><head></head><body style=\"margin:0;background:#808080;\">" + (url.length() > 0 ? "<img height=\"100%\" width=\"100%\" src=\"http://10.22.30.17:5800" + url + "\"></img>" : "<p style=\"text-align:center;padding-top: 46vh;\" height=\"100%\" width=\"100%\">Disabled</p>") + "</body></html>";
             browser.loadHTML(html);
         } catch (Exception e) {

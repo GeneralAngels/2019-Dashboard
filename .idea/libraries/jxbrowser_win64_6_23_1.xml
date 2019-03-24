@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="jxbrowser-6.23">
+  <library name="jxbrowser-win64-6.23.1">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/libs/jxbrowser-6.23.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/jxbrowser-win64-6.23.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -8,14 +8,12 @@
         </element>
         <element id="module-output" name="2230Dashboard" />
       </element>
-      <element id="library" level="project" name="license" />
-      <element id="library" level="project" name="jxbrowser-6.23" />
       <element id="library" level="project" name="org.json:json:20180813" />
-      <element id="library" level="project" name="jxbrowser-win64-6.23" />
       <element id="library" level="project" name="wpiutil-java-3.0.0" />
       <element id="library" level="project" name="ntcore-java-4.0.0" />
       <element id="library" level="project" name="org.jsoup:jsoup:1.11.3" />
       <element id="library" level="project" name="ntcore-jni-4.0.0-all" />
+      <element id="library" level="project" name="license" />
     </root>
   </artifact>
 </component>
